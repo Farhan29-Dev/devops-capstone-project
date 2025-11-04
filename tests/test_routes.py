@@ -141,54 +141,57 @@ class TestAccountService(TestCase):
         data = response.get_json()
         self.assertEqual(data["name"], "Alice")
 
-    def test_list_accounts(self):
-        # Create two accounts
-        self.client.post("/accounts", json={"name": "A", "email": "a@a.com", "address": "A", "phone_number": "111"})
-        self.client.post("/accounts", json={"name": "B", "email": "b@b.com", "address": "B", "phone_number": "222"})
-
-        # List all accounts
-        response = self.client.get("/accounts")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
-        self.assertIsInstance(data, list)
-        self.assertGreaterEqual(len(data), 2)
+    def test_get_account_list(self):
+        """It should Get a list of Accounts"""
+        self._create_accounts(5)
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
 
     def test_update_account(self):
-        # Create an account
-        response = self.client.post("/accounts", json={
-            "name": "Charlie",
-            "email": "charlie@old.com",
-            "address": "Old St",
-            "phone_number": "000"
-        })
-        account_id = response.get_json()["id"]
+        """It should Update an existing Account"""
+        # create an Account to update
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
-        # Update the account
-        response = self.client.put(f"/accounts/{account_id}", json={
-            "name": "Charlie",
-            "email": "charlie@new.com",
-            "address": "New St",
-            "phone_number": "999"
-        })
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
-        self.assertEqual(data["email"], "charlie@new.com")
+        # update the account
+        new_account = resp.get_json()
+        new_account["name"] = "Something Known"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Something Known")
 
     def test_delete_account(self):
-        # Create an account
-        response = self.client.post("/accounts", json={
-            "name": "DeleteMe",
-            "email": "delete@me.com",
+        """It should Delete an Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.client.delete(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_read_account_not_found(self):
+        """It should return 404 when reading a non-existent account"""
+        response = self.client.get("/accounts/0")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_account_not_found(self):
+        """It should return 404 when updating a non-existent account"""
+        response = self.client.put("/accounts/0", json={
+            "name": "Ghost",
+            "email": "ghost@void.com",
             "address": "Nowhere",
             "phone_number": "000"
         })
-        account_id = response.get_json()["id"]
-
-        # Delete the account
-        response = self.client.delete(f"/accounts/{account_id}")
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        # Confirm deletion
-        response = self.client.get(f"/accounts/{account_id}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_account_not_found(self):
+        """It should return 204 even when deleting a non-existent account"""
+        response = self.client.delete("/accounts/0")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
