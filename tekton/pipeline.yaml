@@ -12,6 +12,8 @@ spec:
   workspaces:
     - name: pipeline-workspace
   params:
+    - name: build-image
+      type: string
     - name: repo-url
     - name: branch
       default: main
@@ -44,5 +46,48 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+    - name: tests
+      runAfter:
+        - clone
+      taskRef:
+        name: nose
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: args
+          value: "-v --with-spec --spec-color"
+        - name: database_uri
+          value: "sqlite:///test.db"
+    - name: build
+      runAfter:
+        - lint
+        - tests
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: IMAGE
+          value: "$(params.build-image)"
+    - name: deploy
+      runAfter:
+        - build
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f deploy/deployment.yaml
+
+
+
+
 
 
