@@ -124,3 +124,71 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
+    def test_read_an_account(self):
+        # Create an account first
+        response = self.client.post("/accounts", json={
+            "name": "Alice",
+            "email": "alice@example.com",
+            "address": "123 Main St",
+            "phone_number": "555-1234"
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        account_id = response.get_json()["id"]
+
+        # Read the account
+        response = self.client.get(f"/accounts/{account_id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], "Alice")
+
+    def test_list_accounts(self):
+        # Create two accounts
+        self.client.post("/accounts", json={"name": "A", "email": "a@a.com", "address": "A", "phone_number": "111"})
+        self.client.post("/accounts", json={"name": "B", "email": "b@b.com", "address": "B", "phone_number": "222"})
+
+        # List all accounts
+        response = self.client.get("/accounts")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+        self.assertGreaterEqual(len(data), 2)
+
+    def test_update_account(self):
+        # Create an account
+        response = self.client.post("/accounts", json={
+            "name": "Charlie",
+            "email": "charlie@old.com",
+            "address": "Old St",
+            "phone_number": "000"
+        })
+        account_id = response.get_json()["id"]
+
+        # Update the account
+        response = self.client.put(f"/accounts/{account_id}", json={
+            "name": "Charlie",
+            "email": "charlie@new.com",
+            "address": "New St",
+            "phone_number": "999"
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["email"], "charlie@new.com")
+
+    def test_delete_account(self):
+        # Create an account
+        response = self.client.post("/accounts", json={
+            "name": "DeleteMe",
+            "email": "delete@me.com",
+            "address": "Nowhere",
+            "phone_number": "000"
+        })
+        account_id = response.get_json()["id"]
+
+        # Delete the account
+        response = self.client.delete(f"/accounts/{account_id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Confirm deletion
+        response = self.client.get(f"/accounts/{account_id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
