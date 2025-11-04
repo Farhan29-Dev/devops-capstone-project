@@ -12,13 +12,15 @@ from tests.factories import AccountFactory
 from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
+from service import talisman
+from service.common import log_handlers
 
-DATABASE_URI = os.getenv(
-    "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
-)
+DATABASE_URI = "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"
+
 
 BASE_URL = "/accounts"
 
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 
 ######################################################################
 #  T E S T   C A S E S
@@ -32,8 +34,11 @@ class TestAccountService(TestCase):
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        app.config["SQLALCHEMY_ECHO"] = True  # Optional: for debugging
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
+        talisman.force_https = False
 
     @classmethod
     def tearDownClass(cls):
@@ -53,6 +58,12 @@ class TestAccountService(TestCase):
     ######################################################################
     #  H E L P E R   M E T H O D S
     ######################################################################
+
+    def test_cors_header(self):
+        """It should include CORS headers"""
+        response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), "*")
+
 
     def _create_accounts(self, count):
         """Factory method to create accounts in bulk"""
@@ -194,3 +205,12 @@ class TestAccountService(TestCase):
         """It should return 204 even when deleting a non-existent account"""
         response = self.client.delete("/accounts/0")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
+
+    def test_security_headers(self):
+        response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
+        self.assertEqual(response.headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(response.headers.get("Content-Security-Policy"), "default-src 'self'; object-src 'none'")
+        self.assertEqual(response.headers.get("Referrer-Policy"), "strict-origin-when-cross-origin")
