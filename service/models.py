@@ -3,6 +3,7 @@ Models for Account
 
 All of the models are stored in this module
 """
+import os
 import logging
 from datetime import date
 from flask_sqlalchemy import SQLAlchemy
@@ -19,9 +20,11 @@ class DataValidationError(Exception):
 
 def init_db(app):
     """Initialize the SQLAlchemy app"""
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URI",
+    "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"  # fallback
+    )
     Account.init_db(app)
-
 
 ######################################################################
 #  P E R S I S T E N T   B A S E   M O D E L
