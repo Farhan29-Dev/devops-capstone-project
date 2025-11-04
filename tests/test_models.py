@@ -27,7 +27,7 @@ class TestAccount(unittest.TestCase):
         app.config["DEBUG"] = False
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
-        #app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"
+        # app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"
         Account.init_db(app)
 
     @classmethod
