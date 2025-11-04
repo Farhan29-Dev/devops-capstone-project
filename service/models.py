@@ -20,17 +20,17 @@ class DataValidationError(Exception):
 
 def init_db(app):
     """Initialize the SQLAlchemy app"""
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URI",
-    "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"  # fallback
-    )
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI","postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb")  # fallback
     Account.init_db(app)
 
 ######################################################################
 #  P E R S I S T E N T   B A S E   M O D E L
 ######################################################################
+
+
 class PersistentBase:
     """Base class added persistent methods"""
+
 
     def __init__(self):
         self.id = None  # pylint: disable=invalid-name

@@ -15,7 +15,6 @@ from service import talisman
 
 DATABASE_URI = "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"
 
-
 BASE_URL = "/accounts"
 
 HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
@@ -25,14 +24,10 @@ HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 ######################################################################
 
 
-
 class TestAccountService(TestCase):
     """Account Service Tests"""
 
-
     @classmethod
-
-
     def setUpClass(cls):
         """Run once before all tests"""
         app.config["TESTING"] = True
@@ -44,13 +39,9 @@ class TestAccountService(TestCase):
         init_db(app)
         talisman.force_https = False
 
-
     @classmethod
-
-
     def tearDownClass(cls):
         """Runs once before test suite"""
-
 
     def setUp(self):
         """Runs before each test"""
@@ -58,7 +49,6 @@ class TestAccountService(TestCase):
         db.session.commit()
 
         self.client = app.test_client()
-
 
     def tearDown(self):
         """Runs once after each test case"""
@@ -70,7 +60,6 @@ class TestAccountService(TestCase):
         """It should include CORS headers"""
         response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
         self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), "*")
-
 
     def _create_accounts(self, count):
         """Factory method to create accounts in bulk"""
@@ -98,14 +87,12 @@ class TestAccountService(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
     def test_health(self):
         """It should be healthy"""
         resp = self.client.get("/health")
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["status"], "OK")
-
 
     def test_create_account(self):
         """It should Create a new Account"""
@@ -182,7 +169,6 @@ class TestAccountService(TestCase):
         test_account = AccountFactory()
         resp = self.client.post(BASE_URL, json=test_account.serialize())
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
         # update the account
         new_account = resp.get_json()
         new_account["name"] = "Something Known"
@@ -236,3 +222,4 @@ class TestAccountService(TestCase):
         self.assertEqual(response.headers.get("X-Content-Type-Options"), "nosniff")
         self.assertEqual(response.headers.get("Content-Security-Policy"), "default-src 'self'; object-src 'none'")
         self.assertEqual(response.headers.get("Referrer-Policy"), "strict-origin-when-cross-origin")
+        
