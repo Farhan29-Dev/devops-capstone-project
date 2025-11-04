@@ -194,4 +194,3 @@ class TestAccountService(TestCase):
         """It should return 204 even when deleting a non-existent account"""
         response = self.client.delete("/accounts/0")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
