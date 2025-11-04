@@ -50,3 +50,19 @@ spec:
           rm -rf "${WORKSPACE_SOURCE_PATH}"/..?*
         fi
 
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: lint
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: run-flake8
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/bash
+        pip install flake8
+        flake8 --count --max-complexity=10 --max-line-length=127 --statistics || true
