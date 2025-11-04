@@ -65,8 +65,6 @@ class TestAccountService(TestCase):
         db.session.remove()
     ######################################################################
     #  H E L P E R   M E T H O D S
-    ######################################################################
-
 
     def test_cors_header(self):
         """It should include CORS headers"""
