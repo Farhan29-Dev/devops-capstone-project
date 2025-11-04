@@ -10,7 +10,8 @@ metadata:
   name: cd-pipeline
 spec:
   workspaces:
-    - name: pipeline-workspace
+    - name: source
+    - name: output
   params:
     - name: build-image
       type: string
@@ -21,14 +22,14 @@ spec:
     - name: init
       workspaces:
         - name: source
-          workspace: pipeline-workspace          
+          workspace: source         
       taskRef:
         name: cleanup
 
     - name: clone
       workspaces:
         - name: output
-          workspace: pipeline-workspace          
+          workspace: output          
       taskRef:
         name: git-clone
       params:
@@ -45,7 +46,7 @@ spec:
         - clone
       workspaces:
         - name: source
-          workspace: pipeline-workspace
+          workspace: source
     - name: tests
       runAfter:
         - clone
@@ -53,7 +54,7 @@ spec:
         name: nose
       workspaces:
         - name: source
-          workspace: pipeline-workspace
+          workspace: source
       params:
         - name: args
           value: "-v --with-spec --spec-color"
@@ -68,26 +69,29 @@ spec:
         kind: ClusterTask
       workspaces:
         - name: source
-          workspace: pipeline-workspace
+          workspace: source
       params:
         - name: IMAGE
           value: "$(params.build-image)"
     - name: deploy
-      runAfter:
-        - build
+      workspaces:
+        - name: manifest-dir
+          workspace: source
+        - name: kubeconfig-dir
+          workspace: source
       taskRef:
         name: openshift-client
         kind: ClusterTask
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
       params:
-        - name: SCRIPT
-          value: |
-            oc apply -f deploy/deployment.yaml
-
-
-
-
+      - name: SCRIPT
+        value: |
+          echo "Updating manifest..."
+          sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
+          cat deploy/deployment.yaml
+          echo "Deploying to OpenShift..."
+          oc apply -f deploy/
+          oc get pods -l app=accounts
+      runAfter:
+        - build
 
 
