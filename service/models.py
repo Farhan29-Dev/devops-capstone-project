@@ -17,16 +17,19 @@ db = SQLAlchemy()
 class DataValidationError(Exception):
     """Used for an data validation errors when deserializing"""
 
+
 def init_db(app):
     """Initialize the SQLAlchemy app"""
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "DATABASE_URI", 
-        "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb")  # fallback
+        "DATABASE_URI", "postgresql://postgres:pgs3cr3t@127.0.0.1:5432/testdb"
+    )  # fallback
     Account.init_db(app)
+
 
 ######################################################################
 #  P E R S I S T E N T   B A S E   M O D E L
 ######################################################################
+
 
 class PersistentBase:
     """Base class added persistent methods"""
@@ -108,7 +111,7 @@ class Account(db.Model, PersistentBase):
             "email": self.email,
             "address": self.address,
             "phone_number": self.phone_number,
-            "date_joined": self.date_joined.isoformat()
+            "date_joined": self.date_joined.isoformat(),
         }
 
     def deserialize(self, data):
@@ -129,7 +132,9 @@ class Account(db.Model, PersistentBase):
             else:
                 self.date_joined = date.today()
         except KeyError as error:
-            raise DataValidationError("Invalid Account: missing " + error.args[0]) from error
+            raise DataValidationError(
+                "Invalid Account: missing " + error.args[0]
+            ) from error
         except TypeError as error:
             raise DataValidationError(
                 "Invalid Account: body of request contained "
